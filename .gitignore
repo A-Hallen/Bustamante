@@ -1,1 +1,5 @@
-/client
+/client/node_modules
+/client/src
+/client/public
+/client/package-lock.json
+/client/package.json
