@@ -1,0 +1,14 @@
+{
+  "name": "bustamante",
+  "version": "1.0.0",
+  "description": "servidor de la aplicacion bustamante",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "hallen",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
