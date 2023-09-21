@@ -8,6 +8,7 @@ const consultas = require("./consultas");
 // Import the functions you need from the SDKs you need
 const admin = require("firebase-admin");
 const serviceAccount = require("./bustamante-8474c-8ce6296abb9e.json");
+const { error } = require("console");
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -37,6 +38,10 @@ app.get("/proveedores", (req, res) => {
   res.sendFile(path.join(buildpath, "index.html"));
 });
 
+app.get("/productos", (req, res) => {
+  res.sendFile(path.join(buildpath, "index.html"));
+});
+
 app.get("/download/:filename(*)", (req, res) => {
   const filename = req.params.filename;
   const fileRef = bucket.file(filename);
@@ -54,6 +59,17 @@ app.get("/proveedores-list", (req, res) => {
     })
     .catch((error) => {
       res.status(500).send("Error en la consulta de proveedores");
+    });
+});
+
+app.get("/productos-list", (req, res) => {
+  consultas
+    .getProductosList(db)
+    .then((productosConProveedor) => {
+      res.send(productosConProveedor);
+    })
+    .catch((error) => {
+      res.status(500).send("Error en la consulta de productos");
     });
 });
 
