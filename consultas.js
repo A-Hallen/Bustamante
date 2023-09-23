@@ -40,8 +40,7 @@ async function obtenerProductosConProveedor(db, productos) {
   const productosConProveedor = [];
   const productosPromise = Object.keys(productos).map(async (productoId) => {
     const producto = productos[productoId];
-    const proveedor = await obtenerProveedor(db, producto.proveedor_id);
-
+    const proveedor = await obtenerProveedor(db, producto.proveedorId);
     productosConProveedor.push({
       ...producto,
       nombreProveedor: proveedor.nombre,
@@ -59,9 +58,7 @@ async function obtenerProveedoresConProductos(db, proveedores) {
     async (proveedorId) => {
       const proveedor = proveedores[proveedorId];
       const productosProveedor = proveedor.productos || {};
-
       const productos = await obtenerProductos(db, productosProveedor);
-
       proveedoresConProductos.push({
         proveedorId: proveedorId,
         informacion: proveedor.informacion,
@@ -83,8 +80,7 @@ async function obtenerProveedor(db, productoId) {
 
 async function obtenerProductos(db, productosProveedor) {
   const productosKeys = Object.keys(productosProveedor).slice(0, 3);
-  const productosPromises = productosKeys.map((productoId) => {
-    const producto = productosProveedor[productoId];
+  const productosPromises = productosKeys.map((producto) => {
     const productoRef = db.ref(`productos/${producto}`);
 
     return productoRef.once("value").then((snapshot) => {

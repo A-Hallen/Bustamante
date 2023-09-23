@@ -4,8 +4,12 @@ const app = express();
 const PORT = process.env.PORT || 3030;
 const consultas = require("./consultas");
 const cors = require("cors");
+const multer = require("multer");
+
+const upload = multer({ storage: multer.memoryStorage() });
 
 app.use(cors());
+app.use(express.json());
 
 // firebase
 // Import the functions you need from the SDKs you need
@@ -62,6 +66,75 @@ app.get("/proveedores-list", (req, res) => {
     })
     .catch((error) => {
       res.status(500).send("Error en la consulta de proveedores");
+    });
+});
+
+app.post("/upload-image", upload.single("image"), (req, res) => {
+  const file = req.file;
+  if (!file) {
+    res.status(400).send("No se ha enviado ninguna imagen");
+    return;
+  }
+  const currentDate = new Date();
+  const extension = file.originalname.split(".").pop();
+  const filePath = `imagenes/${currentDate.getTime()}.${extension}`;
+
+  const blob = bucket.file(filePath);
+  const blobStream = blob.createWriteStream();
+
+  blobStream.on("error", (error) => {
+    console.log(error);
+    res.status(500).send("Error al subir la imagen");
+  });
+
+  blobStream.on("finish", async () => {
+    // Obtiene la URL de la imagen subida
+    const url = await blob.getSignedUrl({
+      action: "read",
+      expires: "03-01-2500", // Puedes ajustar la fecha de expiración según tus necesidades
+    });
+    res.status(200).send(url[0]);
+  });
+
+  blobStream.end(file.buffer);
+});
+
+app.post("/upload-product", (req, res) => {
+  const producto = req.body;
+  const productosRef = db.ref("productos");
+  const proveedoresRef = db.ref("proveedores");
+  const proveedorRef = proveedoresRef.child(producto.proveedorId);
+  console.log(producto.proveedorId);
+  const nuevoProductoId = productosRef.push().key;
+  proveedorRef
+    .child("productos")
+    .transaction((productos) => {
+      if (productos === null) {
+        return { [nuevoProductoId]: true };
+      } else {
+        productos[nuevoProductoId] = true;
+        return productos;
+      }
+    })
+    .then((transactionResult) => {
+      if (transactionResult.committed) {
+        console.log("Elemento agregado correctamente");
+      } else {
+        console.log("La transacción fue abortada");
+      }
+    })
+    .catch((error) => {
+      console.error("Error al agregar el elemento:", error);
+    });
+  const nuevoProductoRef = productosRef.child(nuevoProductoId);
+  nuevoProductoRef
+    .set(producto)
+    .then(() => {
+      res.send("error");
+    })
+    .catch((error) => {
+      console.error("Error al crear el nuevo producto:", error);
+      res.send("OK");
     });
 });
 
