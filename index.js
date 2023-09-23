@@ -3,6 +3,9 @@ const path = require("path");
 const app = express();
 const PORT = process.env.PORT || 3030;
 const consultas = require("./consultas");
+const cors = require("cors");
+
+app.use(cors());
 
 // firebase
 // Import the functions you need from the SDKs you need
