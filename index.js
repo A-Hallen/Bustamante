@@ -15,7 +15,6 @@ app.use(express.json());
 // Import the functions you need from the SDKs you need
 const admin = require("firebase-admin");
 const serviceAccount = require("./bustamante-8474c-8ce6296abb9e.json");
-const { error } = require("console");
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -104,7 +103,6 @@ app.post("/upload-product", (req, res) => {
   const productosRef = db.ref("productos");
   const proveedoresRef = db.ref("proveedores");
   const proveedorRef = proveedoresRef.child(producto.proveedorId);
-  console.log(producto.proveedorId);
   const nuevoProductoId = productosRef.push().key;
   proveedorRef
     .child("productos")
@@ -147,6 +145,19 @@ app.get("/productos-list", (req, res) => {
     .catch((error) => {
       res.status(500).send("Error en la consulta de productos");
     });
+});
+
+const httpProxy = require("http-proxy");
+const proxy = httpProxy.createProxyServer();
+
+// Servidor proxy para evitar el baneo de firebase
+app.get("/redireccionar/*", (req, res) => {
+  // Obtiene el patrón de ruta después de "/redireccionar/"
+  const clientPath = req.originalUrl.split("/redireccionar")[1];
+  const targetUrl = "https://storage.googleapis.com";
+  const url = path.join(targetUrl, clientPath);
+  console.log(`redireccionando a ... \n ${url} \n desde ${clientPath}`);
+  proxy.web(req, res, { target: url });
 });
 
 app.listen(PORT, () => {
