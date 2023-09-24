@@ -3,6 +3,8 @@ const path = require("path");
 const app = express();
 const PORT = process.env.PORT || 3030;
 const consultas = require("./consultas");
+const utils = require("./utils");
+
 const cors = require("cors");
 const multer = require("multer");
 
@@ -147,17 +149,14 @@ app.get("/productos-list", (req, res) => {
     });
 });
 
-const httpProxy = require("http-proxy");
-const proxy = httpProxy.createProxyServer();
+app.get("/firebasestorage.googleapis.com/*", (req, res) => {
+  const url = "https:/" + req.originalUrl;
+  utils.serveFile(url, res, true);
+});
 
-// Servidor proxy para evitar el baneo de firebase
-app.get("/redireccionar/*", (req, res) => {
-  // Obtiene el patrón de ruta después de "/redireccionar/"
-  const clientPath = req.originalUrl.split("/redireccionar")[1];
-  const targetUrl = "https://storage.googleapis.com";
-  const url = path.join(targetUrl, clientPath);
-  console.log(`redireccionando a ... \n ${url} \n desde ${clientPath}`);
-  proxy.web(req, res, { target: url });
+app.get("/storage.googleapis.com/*", (req, res) => {
+  const url = `https:/${req.originalUrl}`;
+  utils.serveFile(url, res);
 });
 
 app.listen(PORT, () => {
