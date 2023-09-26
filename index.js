@@ -17,6 +17,7 @@ app.use(express.json());
 // Import the functions you need from the SDKs you need
 const admin = require("firebase-admin");
 const serviceAccount = require("./bustamante-8474c-8ce6296abb9e.json");
+const { error, info } = require("console");
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -73,32 +74,79 @@ app.get("/proveedores-list", (req, res) => {
 app.post("/upload-image", upload.single("image"), (req, res) => {
   const file = req.file;
   if (!file) {
-    res.status(400).send("No se ha enviado ninguna imagen");
+    res.status(400).send(errorMessage);
     return;
   }
   const currentDate = new Date();
   const extension = file.originalname.split(".").pop();
   const filePath = `imagenes/${currentDate.getTime()}.${extension}`;
-
-  const blob = bucket.file(filePath);
-  const blobStream = blob.createWriteStream();
-
-  blobStream.on("error", (error) => {
-    console.log(error);
-    res.status(500).send("Error al subir la imagen");
-  });
-
-  blobStream.on("finish", async () => {
-    // Obtiene la URL de la imagen subida
-    const url = await blob.getSignedUrl({
-      action: "read",
-      expires: "03-01-2500", // Puedes ajustar la fecha de expiración según tus necesidades
-    });
-    res.status(200).send(url[0]);
-  });
-
-  blobStream.end(file.buffer);
+  const errorMessage = "No se ha enviado ninguna imagen";
+  utils.uploadFile(res, file, filePath, errorMessage, bucket);
 });
+
+app.post("/upload-proveedor", (req, res) => {
+  const proveedor = req.body;
+  const proveedoresRef = db.ref("proveedores");
+  const nuevoProveedorId = proveedoresRef.push().key;
+  const nuevoProveedorRef = proveedoresRef.child(nuevoProveedorId);
+  nuevoProveedorRef
+    .set(proveedor)
+    .then(() => {
+      res.send("error");
+    })
+    .catch((error) => {
+      console.error("Error al crear el nuevo proveedor", error);
+      res.send("OK");
+    });
+});
+
+app.post("/upload-information", upload.single("file"), (req, res) => {
+  const file = req.file;
+  const errorMessage = "No se ha enviado ningun archivo";
+  if (!file) {
+    res.status(400).send(errorMessage);
+    return;
+  }
+  const proveedorId = req.body.proveedorId;
+  const fileName = req.body.fileName;
+  const currentDate = new Date();
+  const extension = fileName.split(".").pop();
+  const filePath = `documentos/${currentDate.getTime()}.${extension}`;
+  console.log(
+    `Id: ${proveedorId}, filename: ${fileName}, filePath: ${filePath}`
+  );
+  utils
+    .uploadFileGetUrl(file, filePath, bucket)
+    .then((url) => {
+      saveInformationData(
+        url,
+        proveedorId,
+        utils.nombreSinExtension(fileName),
+        res
+      );
+    })
+    .catch((error) => {
+      console.log(error);
+      res.status(400).send(error);
+    });
+});
+
+function saveInformationData(url, proveedorId, fileName, res) {
+  const proveedoresRef = db.ref("proveedores");
+  const proveedorRef = proveedoresRef.child(proveedorId);
+  let informacion = {};
+  const clave = `informacion/${fileName}`;
+  informacion[clave] = url;
+  proveedorRef
+    .update(informacion)
+    .then(() => {
+      res.status(200).send("OK");
+    })
+    .catch((error) => {
+      console.log(error);
+      res.status(400).send(error);
+    });
+}
 
 app.post("/upload-product", (req, res) => {
   const producto = req.body;
@@ -138,6 +186,19 @@ app.post("/upload-product", (req, res) => {
     });
 });
 
+app.post("/proveedor-products", (req, res) => {
+  let id = req.body.id;
+  consultas
+    .getProductListByProveedorId(id, db)
+    .then((productos) => {
+      res.send(productos);
+    })
+    .catch((error) => {
+      console.log(error);
+      res.status(500).send("Error en la consulta de productos del proveedor");
+    });
+});
+
 app.get("/productos-list", (req, res) => {
   consultas
     .getProductosList(db)
@@ -151,7 +212,7 @@ app.get("/productos-list", (req, res) => {
 
 app.get("/firebasestorage.googleapis.com/*", (req, res) => {
   const url = "https:/" + req.originalUrl;
-  utils.serveFile(url, res, true);
+  utils.serveFile(url, res);
 });
 
 app.get("/storage.googleapis.com/*", (req, res) => {

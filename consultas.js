@@ -17,6 +17,33 @@ exports.getProductosList = function (db) {
     });
 };
 
+// Definir la función para obtener los productos con ID igual a 1
+exports.getProductListByProveedorId = function (id, db) {
+  return new Promise((resolve, reject) => {
+    // Crea una referencia a la lista de productos
+    const productosRef = db.ref("productos");
+
+    // Realiza la consulta a la base de datos
+    productosRef
+      .once("value")
+      .then((snapshot) => {
+        const productos = snapshot.val();
+
+        // Filtra los productos con proveedorId igual a 1
+        const productosConProveedorId1 = Object.values(productos).filter(
+          (producto) => {
+            return producto.proveedorId == id;
+          }
+        );
+
+        resolve(productosConProveedorId1);
+      })
+      .catch((error) => {
+        reject(error);
+      });
+  });
+};
+
 exports.getProveedoresList = function (db) {
   const proveedoresRef = db.ref("proveedores"); // Se obtiene una referencia a la colección "proveedores" en la bd.
 
