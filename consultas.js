@@ -69,6 +69,7 @@ async function obtenerProductosConProveedor(db, productos) {
     const producto = productos[productoId];
     const proveedor = await obtenerProveedor(db, producto.proveedorId);
     productosConProveedor.push({
+      id: productoId,
       ...producto,
       nombreProveedor: proveedor.nombre,
       tipoProveedor: proveedor.tipo,

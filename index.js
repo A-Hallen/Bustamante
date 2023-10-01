@@ -220,6 +220,17 @@ app.get("/storage.googleapis.com/*", (req, res) => {
   utils.serveFile(url, res);
 });
 
+app.get("/zapier-products", (req, res) => {
+  consultas
+    .getProductosList(db)
+    .then((productosConProveedor) => {
+      res.send(productosConProveedor);
+    })
+    .catch((error) => {
+      res.status(500).send("Error en la consulta de productos");
+    });
+});
+
 app.listen(PORT, () => {
   console.log(`server started on port ${PORT}`);
 });
