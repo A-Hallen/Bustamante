@@ -231,6 +231,36 @@ app.get("/zapier-products", (req, res) => {
     });
 });
 
+app.get("/update-date", async (req, res) => {
+  //const fechaSolicitada = req.query.fecha;
+  const fechaSolicitada = "productos";
+  await consultas
+    .obtenerFechaDeUltimaActualizacion(fechaSolicitada, db)
+    .then((fecha) => {
+      res.json({ fecha: fecha });
+    })
+    .catch((error) => {
+      console.error(
+        `Error al obtener la fecha de la actualizacion de: ${fechaSolicitada}, error: ${error}`
+      );
+      res.status(500).send(`error: ${error}`);
+    });
+});
+
+app.get("/set-updatetime", async (req, res) => {
+  // const fechaSolicitada = req.query.fecha;
+  const fechaSolicitada = "informacion";
+  consultas
+    .actualizarFecha(fechaSolicitada, db)
+    .then((response) => {
+      console.log(response);
+      res.status(200).send(response);
+    })
+    .catch((error) => {
+      res.status(500).send(error);
+    });
+});
+
 app.listen(PORT, () => {
   console.log(`server started on port ${PORT}`);
 });

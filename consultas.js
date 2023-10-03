@@ -1,3 +1,36 @@
+exports.obtenerFechaDeUltimaActualizacion = function (fechaSolicitada, db) {
+  return new Promise((resolve, reject) => {
+    const dateRef = db.ref(`updatetime/${fechaSolicitada}`);
+
+    dateRef.once(
+      "value",
+      (snapshot) => {
+        resolve(snapshot.val());
+        return snapshot.val();
+      },
+      (error) => {
+        reject(error);
+      }
+    );
+  });
+};
+
+exports.actualizarFecha = function (fechaSolicitada, db) {
+  return new Promise((resolve, reject) => {
+    const dateRef = db.ref(`updatetime/${fechaSolicitada}`);
+    let fechaActual = new Date().toISOString();
+
+    dateRef
+      .set(fechaActual)
+      .then(() => {
+        resolve(`Nueva fecha agregada: ${fechaActual}`);
+      })
+      .catch((error) => {
+        reject(`Error: ${error}`);
+      });
+  });
+};
+
 exports.getProductosList = function (db) {
   const productosRef = db.ref("productos");
 
@@ -86,7 +119,11 @@ async function obtenerProveedoresConProductos(db, proveedores) {
     async (proveedorId) => {
       const proveedor = proveedores[proveedorId];
       const productosProveedor = proveedor.productos || {};
-      const productos = await obtenerProductos(db, productosProveedor);
+      const productos = await obtenerProductos(
+        db,
+        productosProveedor,
+        proveedor
+      );
       proveedoresConProductos.push({
         proveedorId: proveedorId,
         informacion: proveedor.informacion,
@@ -106,13 +143,16 @@ async function obtenerProveedor(db, productoId) {
   return proveedorData;
 }
 
-async function obtenerProductos(db, productosProveedor) {
+async function obtenerProductos(db, productosProveedor, proveedor) {
   const productosKeys = Object.keys(productosProveedor).slice(0, 3);
   const productosPromises = productosKeys.map((producto) => {
     const productoRef = db.ref(`productos/${producto}`);
 
     return productoRef.once("value").then((snapshot) => {
       const productoData = snapshot.val();
+      productoData.id = producto;
+      productoData.nombreProveedor = proveedor.nombre;
+      productoData.tipoProveedor = proveedor.tipo;
       return productoData;
     });
   });
