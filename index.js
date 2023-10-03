@@ -232,8 +232,7 @@ app.get("/zapier-products", (req, res) => {
 });
 
 app.get("/update-date", async (req, res) => {
-  //const fechaSolicitada = req.query.fecha;
-  const fechaSolicitada = "productos";
+  const fechaSolicitada = req.query.fecha;
   await consultas
     .obtenerFechaDeUltimaActualizacion(fechaSolicitada, db)
     .then((fecha) => {
@@ -248,8 +247,7 @@ app.get("/update-date", async (req, res) => {
 });
 
 app.get("/set-updatetime", async (req, res) => {
-  // const fechaSolicitada = req.query.fecha;
-  const fechaSolicitada = "informacion";
+  const fechaSolicitada = req.query.fecha;
   consultas
     .actualizarFecha(fechaSolicitada, db)
     .then((response) => {
