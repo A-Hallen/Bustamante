@@ -125,9 +125,20 @@ async function obtenerProveedoresConProductos(db, proveedores) {
         proveedor
       );
 
+      var informacion = null;
+      if (proveedor.informacion != null) {
+        try {
+          console.log(Object.values(proveedor.informacion));
+        } catch (error) {
+          console.log(proveedor.nombre);
+          console.log(proveedor.informacion);
+          console.error(error);
+        }
+      }
+
       proveedoresConProductos.push({
         proveedorId: proveedorId,
-        informacion: [Object.values(proveedor.informacion)],
+        informacion: informacion,
         nombre: proveedor.nombre,
         tipo: proveedor.tipo,
         productos: productos,
