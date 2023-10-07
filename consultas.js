@@ -124,9 +124,10 @@ async function obtenerProveedoresConProductos(db, proveedores) {
         productosProveedor,
         proveedor
       );
+
       proveedoresConProductos.push({
         proveedorId: proveedorId,
-        informacion: proveedor.informacion,
+        informacion: [Object.values(proveedor.informacion)],
         nombre: proveedor.nombre,
         tipo: proveedor.tipo,
         productos: productos,

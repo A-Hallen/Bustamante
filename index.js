@@ -117,9 +117,11 @@ app.post("/upload-information", upload.single("file"), (req, res) => {
   );
   utils
     .uploadFileGetUrl(file, filePath, bucket)
-    .then((url) => {
+    .then((result) => {
       saveInformationData(
-        url,
+        result.url,
+        result.hash,
+        extension,
         proveedorId,
         utils.nombreSinExtension(fileName),
         res
@@ -131,16 +133,31 @@ app.post("/upload-information", upload.single("file"), (req, res) => {
     });
 });
 
-function saveInformationData(url, proveedorId, fileName, res) {
+function saveInformationData(url, hash, extension, proveedorId, fileName, res) {
   const proveedoresRef = db.ref("proveedores");
   const proveedorRef = proveedoresRef.child(proveedorId);
-  let informacion = {};
-  const clave = `informacion/${fileName}`;
-  informacion[clave] = url;
-  proveedorRef
-    .update(informacion)
+  const informacionRef = proveedorRef.child("informacion");
+  console.log(
+    `\n test: \n extension: ${extension}, hash: ${hash}, filename: ${fileName}, url: ${url}`
+  );
+  informacionRef
+    .update({
+      [fileName]: {
+        extension: extension,
+        hash: hash,
+        url: url,
+      },
+    })
     .then(() => {
       res.status(200).send("OK");
+      proveedorRef
+        .child("tipo")
+        .once("value")
+        .then(async (snapshot) => {
+          var tipo = snapshot.val();
+          console.log(tipo);
+          consultas.actualizarFecha(tipo, db);
+        });
     })
     .catch((error) => {
       console.log(error);
@@ -179,6 +196,7 @@ app.post("/upload-product", (req, res) => {
     .set(producto)
     .then(() => {
       res.send("error");
+      consultas.actualizarFecha("productos", db);
     })
     .catch((error) => {
       console.error("Error al crear el nuevo producto:", error);
@@ -218,17 +236,6 @@ app.get("/firebasestorage.googleapis.com/*", (req, res) => {
 app.get("/storage.googleapis.com/*", (req, res) => {
   const url = `https:/${req.originalUrl}`;
   utils.serveFile(url, res);
-});
-
-app.get("/zapier-products", (req, res) => {
-  consultas
-    .getProductosList(db)
-    .then((productosConProveedor) => {
-      res.send(productosConProveedor);
-    })
-    .catch((error) => {
-      res.status(500).send("Error en la consulta de productos");
-    });
 });
 
 app.get("/update-date", async (req, res) => {

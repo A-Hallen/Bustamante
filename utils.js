@@ -1,9 +1,15 @@
 const https = require("https");
 
+/**
+ * Esta función sube un archivo y obtiene su url de descarga
+ * @param {Express.Multer.File} file - El el archivo a subir.
+ * @param {string} filePath - Ruta donde guardarlo en firebase.
+ * @param {Bucket} bucket - El Bucket de firebase.
+ * @returns {Promise<{string, string}>} - Una promesa
+ */
 exports.uploadFileGetUrl = function (file, filePath, bucket) {
   const blob = bucket.file(filePath);
   const blobStream = blob.createWriteStream();
-
   return new Promise((resolve, reject) => {
     blobStream.on("error", (error) => {
       reject(error);
@@ -15,7 +21,12 @@ exports.uploadFileGetUrl = function (file, filePath, bucket) {
         action: "read",
         expires: "03-01-2500", // Puedes ajustar la fecha de expiración según tus necesidades
       });
-      resolve(url[0]);
+      const data = await blob.getMetadata();
+      const hash = data[0].md5Hash;
+      console.log("filepath: ", filePath);
+      console.log("Hash del archivo:", hash);
+      console.log("url del archivo: ", url);
+      resolve({ url: url[0], hash: hash });
     });
 
     blobStream.end(file.buffer);
