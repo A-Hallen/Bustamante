@@ -125,7 +125,7 @@ async function obtenerProveedoresConProductos(db, proveedores) {
         proveedor
       );
 
-      var informacion = null;
+      var informacion;
       if (proveedor.informacion != null) {
         try {
           informacion = Object.values(proveedor.informacion);
