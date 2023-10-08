@@ -131,8 +131,6 @@ async function obtenerProveedoresConProductos(db, proveedores) {
           informacion = Object.values(proveedor.informacion);
           console.log(Object.values(proveedor.informacion));
         } catch (error) {
-          console.log(proveedor.nombre);
-          console.log(proveedor.informacion);
           console.error(error);
         }
       }

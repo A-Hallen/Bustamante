@@ -109,18 +109,21 @@ app.post("/upload-information", upload.single("file"), (req, res) => {
   }
   const proveedorId = req.body.proveedorId;
   const fileName = req.body.fileName;
+  const hash = req.body.hash;
   const currentDate = new Date();
+  const nombre = fileName.substring(0, fileName.lastIndexOf("."));
   const extension = fileName.split(".").pop();
   const filePath = `documentos/${currentDate.getTime()}.${extension}`;
   console.log(
-    `Id: ${proveedorId}, filename: ${fileName}, filePath: ${filePath}`
+    `Id: ${proveedorId}, filename: ${fileName}, filePath: ${filePath}, hash: ${hash}`
   );
   utils
     .uploadFileGetUrl(file, filePath, bucket)
-    .then((result) => {
+    .then((url) => {
       saveInformationData(
-        result.url,
-        result.hash,
+        url,
+        hash,
+        nombre,
         extension,
         proveedorId,
         utils.nombreSinExtension(fileName),
@@ -133,16 +136,25 @@ app.post("/upload-information", upload.single("file"), (req, res) => {
     });
 });
 
-function saveInformationData(url, hash, extension, proveedorId, fileName, res) {
+function saveInformationData(
+  url,
+  hash,
+  nombre,
+  extension,
+  proveedorId,
+  fileName,
+  res
+) {
   const proveedoresRef = db.ref("proveedores");
   const proveedorRef = proveedoresRef.child(proveedorId);
   const informacionRef = proveedorRef.child("informacion");
   console.log(
-    `\n test: \n extension: ${extension}, hash: ${hash}, filename: ${fileName}, url: ${url}`
+    `\n test: \nnombre: ${nombre} extension: ${extension}, hash: ${hash}, filename: ${fileName}, url: ${url}`
   );
   informacionRef
     .update({
       [fileName]: {
+        nombre: nombre,
         extension: extension,
         hash: hash,
         url: url,
